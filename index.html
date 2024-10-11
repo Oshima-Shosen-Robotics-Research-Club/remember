@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Parsing Example</title>
+</head>
+
+<body>
+    <h1>Code Parsing and Quiz Generation</h1>
+
+    <div id="quiz-container">
+        <!-- Generated quiz will be displayed here -->
+    </div>
+
+    <script>
+        // サブモジュール内のコードファイルを読み込んで解析する
+        async function fetchAndParseCode() {
+            // サブモジュール内のターゲットリポジトリからファイルを取得
+            const response = await fetch('./robocon2024-national/src/controller/main.cpp'); // C++ファイルの例
+            const code = await response.text();
+            return code;
+        }
+
+        // 正規表現でC++の変数宣言を解析する
+        function parseCppVariables(code) {
+            const pattern = /([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*)\s*=\s*(.*?);/g;
+            let match;
+            const variables = [];
+
+            while ((match = pattern.exec(code)) !== null) {
+                const varType = match[1];
+                const varName = match[2];
+                const varValue = match[3];
+                variables.push({ type: varType, name: varName, value: varValue });
+            }
+
+            return variables;
+        }
+
+        // 問題を生成する
+        function generateQuestion(variable) {
+            const question = `Which of the following describes the variable declaration '${variable.name}'?`;
+            const options = [
+                `a. Declares a ${variable.type} type variable named ${variable.name} and initializes it with ${variable.value}.`,
+                "b. The variable is uninitialized.",
+                "c. The variable type is incorrect.",
+                "d. The initialization value is missing."
+            ];
+
+            return `<p>${question}</p><ul>${options.map(opt => `<li>${opt}</li>`).join('')}</ul>`;
+        }
+
+        // クイズをページに表示する
+        async function displayQuiz() {
+            const code = await fetchAndParseCode();
+            const variables = parseCppVariables(code);
+
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = variables.map(generateQuestion).join('');
+        }
+
+        // ページ読み込み時にクイズを表示
+        window.onload = displayQuiz;
+    </script>
+</body>
+
+</html>
