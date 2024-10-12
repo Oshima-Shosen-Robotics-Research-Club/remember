@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>コード解析とクイズ生成</title>
+    <script src="https://unpkg.com/tree-sitter"></script>
+    <script src="https://unpkg.com/tree-sitter-cpp"></script>
 </head>
 
 <body>
@@ -27,19 +29,32 @@
             return code;
         }
 
-        // 正規表現でC++の変数宣言を解析する
-        function parseCppVariables(code) {
-            const pattern = /([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*)\s*\((.*?)\);/g;
-            let match;
+        // Tree-sitterを使ってC++の変数宣言を解析する
+        async function parseCppVariables(code) {
+            await TreeSitter.init();
+            const CPP = await TreeSitter.Language.load('https://unpkg.com/tree-sitter-cpp.wasm');
+            const parser = new TreeSitter();
+            parser.setLanguage(CPP);
+
+            const tree = parser.parse(code);
             const variables = [];
 
-            while ((match = pattern.exec(code)) !== null) {
-                const varType = match[1];
-                const varName = match[2];
-                const varValue = match[3];
-                variables.push({ type: varType, name: varName, value: varValue });
+            function traverse(node) {
+                if (node.type === 'declaration') {
+                    const typeNode = node.childForFieldName('type');
+                    const declaratorNode = node.childForFieldName('declarator');
+                    if (typeNode && declaratorNode) {
+                        const varType = typeNode.text;
+                        const varName = declaratorNode.text;
+                        variables.push({ type: varType, name: varName, value: '' });
+                    }
+                }
+                for (let i = 0; i < node.childCount; i++) {
+                    traverse(node.child(i));
+                }
             }
 
+            traverse(tree.rootNode);
             return variables;
         }
 
@@ -83,7 +98,7 @@
         // クイズをページに表示する
         async function displayQuiz() {
             const code = await fetchAndParseCode();
-            const variables = parseCppVariables(code);
+            const variables = await parseCppVariables(code);
             questions = variables.map(generateQuestion);
             showQuestion();
         }
