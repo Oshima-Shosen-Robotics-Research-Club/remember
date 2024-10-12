@@ -80,7 +80,7 @@
             // 選択肢をシャッフル
             const shuffledOptions = shuffleArray(options);
 
-            return `<p>次の変数宣言 '${variable.name}' に関する文法的な問題を選択してください。</p><ul>${shuffledOptions.map((opt, index) => `<li>${String.fromCharCode(97 + index)}. ${opt}</li>`).join('')}</ul>`;
+            return `<p>次の変数宣言 '${variable.type} ${variable.name} = ${variable.value};' に関する文法的な問題を選択してください。</p><ul>${shuffledOptions.map((opt, index) => `<li>${String.fromCharCode(97 + index)}. ${opt}</li>`).join('')}</ul>`;
         }
 
         // 現在の問題を表示する
