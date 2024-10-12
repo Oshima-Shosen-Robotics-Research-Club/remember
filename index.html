@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Parsing Example</title>
+    <title>コード解析とクイズ生成</title>
 </head>
 
 <body>
-    <h1>Code Parsing and Quiz Generation</h1>
+    <h1>コード解析とクイズ生成</h1>
 
     <div id="quiz-container">
-        <!-- Generated quiz will be displayed here -->
+        <!-- 生成されたクイズがここに表示されます -->
     </div>
+    <button id="next-button" style="display:none;">次へ</button>
 
     <script>
+        let currentQuestionIndex = 0;
+        let questions = [];
+
         // サブモジュール内のコードファイルを読み込んで解析する
         async function fetchAndParseCode() {
             // サブモジュール内のターゲットリポジトリからファイルを取得
@@ -25,7 +29,7 @@
 
         // 正規表現でC++の変数宣言を解析する
         function parseCppVariables(code) {
-            const pattern = /([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*)\s*=\s*(.*?);/g;
+            const pattern = /([a-zA-Z_]\w*)\s+([a-zA-Z_]\w*)\s*\((.*?)\);/g;
             let match;
             const variables = [];
 
@@ -39,27 +43,56 @@
             return variables;
         }
 
+        // 配列をランダムにシャッフルする関数
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         // 問題を生成する
         function generateQuestion(variable) {
-            const question = `Which of the following describes the variable declaration '${variable.name}'?`;
+            const correctOption = `${variable.type} 型の変数 ${variable.name} を宣言し、${variable.value} で初期化している。`;
             const options = [
-                `a. Declares a ${variable.type} type variable named ${variable.name} and initializes it with ${variable.value}.`,
-                "b. The variable is uninitialized.",
-                "c. The variable type is incorrect.",
-                "d. The initialization value is missing."
+                correctOption,
+                `${variable.name} 型の変数 ${variable.type} を宣言し、${variable.value} で初期化している。`,
+                `${variable.value} 型の変数 ${variable.name} を宣言し、${variable.type} で初期化している。`,
+                `${variable.value} 型の変数 ${variable.type} を宣言し、${variable.name} で初期化している。`
             ];
 
-            return `<p>${question}</p><ul>${options.map(opt => `<li>${opt}</li>`).join('')}</ul>`;
+            // 選択肢をシャッフル
+            const shuffledOptions = shuffleArray(options);
+
+            return `<p>次の変数宣言 '${variable.name}' に関する文法的な問題を選択してください。</p><ul>${shuffledOptions.map((opt, index) => `<li>${String.fromCharCode(97 + index)}. ${opt}</li>`).join('')}</ul>`;
+        }
+
+        // 現在の問題を表示する
+        function showQuestion() {
+            if (currentQuestionIndex < questions.length) {
+                const quizContainer = document.getElementById('quiz-container');
+                quizContainer.innerHTML = questions[currentQuestionIndex];
+                document.getElementById('next-button').style.display = 'block';
+            } else {
+                document.getElementById('quiz-container').innerHTML = '<p>全ての問題が終了しました。</p>';
+                document.getElementById('next-button').style.display = 'none';
+            }
         }
 
         // クイズをページに表示する
         async function displayQuiz() {
             const code = await fetchAndParseCode();
             const variables = parseCppVariables(code);
-
-            const quizContainer = document.getElementById('quiz-container');
-            quizContainer.innerHTML = variables.map(generateQuestion).join('');
+            questions = variables.map(generateQuestion);
+            showQuestion();
         }
+
+        // 「次へ」ボタンのクリックイベント
+        document.getElementById('next-button').addEventListener('click', () => {
+            currentQuestionIndex++;
+            showQuestion();
+        });
 
         // ページ読み込み時にクイズを表示
         window.onload = displayQuiz;
