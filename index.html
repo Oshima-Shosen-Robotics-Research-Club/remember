@@ -25,8 +25,7 @@
 
         // Tree-sitterの初期化
         async function initializeParser() {
-            const language = await Parser.Language.load(CPP);
-            parser.setLanguage(language);
+            parser.setLanguage(CPP);
         }
 
         // サブモジュール内のコードファイルを読み込んで解析する
