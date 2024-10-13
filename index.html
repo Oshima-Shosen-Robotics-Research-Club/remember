@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>コード解析とクイズ生成</title>
-    <script src="https://unpkg.com/tree-sitter"></script>
-    <script src="https://unpkg.com/tree-sitter-cpp"></script>
 </head>
 
 <body>
@@ -17,44 +15,49 @@
     </div>
     <button id="next-button" style="display:none;">次へ</button>
 
-    <script>
+    <script type="module">
+        import Parser from 'https://unpkg.com/tree-sitter';
+        import CPP from 'https://unpkg.com/tree-sitter-wasms/out/tree-sitter-cpp.wasm';
+
         let currentQuestionIndex = 0;
         let questions = [];
+        let parser = new Parser();
+
+        // Tree-sitterの初期化
+        async function initializeParser() {
+            const language = await Parser.Language.load(CPP);
+            parser.setLanguage(language);
+        }
 
         // サブモジュール内のコードファイルを読み込んで解析する
         async function fetchAndParseCode() {
-            // サブモジュール内のターゲットリポジトリからファイルを取得
             const response = await fetch('./robocon2024-national/src/controller/main.cpp'); // C++ファイルの例
             const code = await response.text();
-            return code;
+
+            // Tree-sitterを使って解析する
+            const tree = parser.parse(code);
+            return tree;
         }
 
-        // Tree-sitterを使ってC++の変数宣言を解析する
-        async function parseCppVariables(code) {
-            await TreeSitter.init();
-            const CPP = await TreeSitter.Language.load('https://unpkg.com/tree-sitter-cpp.wasm');
-            const parser = new TreeSitter();
-            parser.setLanguage(CPP);
-
-            const tree = parser.parse(code);
+        // 解析結果からC++の変数宣言を抽出する
+        function extractVariables(node) {
             const variables = [];
 
+            // 再帰的にノードを探索して変数宣言を探す
             function traverse(node) {
-                if (node.type === 'declaration') {
-                    const typeNode = node.childForFieldName('type');
-                    const declaratorNode = node.childForFieldName('declarator');
-                    if (typeNode && declaratorNode) {
-                        const varType = typeNode.text;
-                        const varName = declaratorNode.text;
-                        variables.push({ type: varType, name: varName, value: '' });
-                    }
+                if (node.type === 'variable_declarator') {
+                    const varType = node.parent.child(0).text;
+                    const varName = node.child(0).text;
+                    const varValue = node.child(1) ? node.child(1).text : null;
+                    variables.push({ type: varType, name: varName, value: varValue });
                 }
+
                 for (let i = 0; i < node.childCount; i++) {
                     traverse(node.child(i));
                 }
             }
 
-            traverse(tree.rootNode);
+            traverse(node.rootNode);
             return variables;
         }
 
@@ -80,7 +83,7 @@
             // 選択肢をシャッフル
             const shuffledOptions = shuffleArray(options);
 
-            return `<p>次の変数宣言 '${variable.type} ${variable.name} = ${variable.value};' に関する文法的な問題を選択してください。</p><ul>${shuffledOptions.map((opt, index) => `<li>${String.fromCharCode(97 + index)}. ${opt}</li>`).join('')}</ul>`;
+            return `<p>次の変数宣言 '${variable.name}' に関する文法的な問題を選択してください。</p><ul>${shuffledOptions.map((opt, index) => `<li>${String.fromCharCode(97 + index)}. ${opt}</li>`).join('')}</ul>`;
         }
 
         // 現在の問題を表示する
@@ -97,8 +100,9 @@
 
         // クイズをページに表示する
         async function displayQuiz() {
-            const code = await fetchAndParseCode();
-            const variables = await parseCppVariables(code);
+            await initializeParser();
+            const tree = await fetchAndParseCode();
+            const variables = extractVariables(tree);
             questions = variables.map(generateQuestion);
             showQuestion();
         }
