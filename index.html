@@ -26,15 +26,15 @@
             console.log("Initializing parser...");
             await TreeSitter.init();
             parser = new TreeSitter();
-            const Cpp = await TreeSitter.Language('https://unpkg.com/tree-sitter-wasms/out/tree-sitter-cpp.wasm');
-            parser.setLanguage(Cpp);
+            const Lang = await TreeSitter.Language.load('https://unpkg.com/tree-sitter-wasms/out/tree-sitter-cpp.wasm');
+            parser.setLanguage(Lang);
             console.log("Parser initialized.");
         }
 
         // サブモジュール内のコードファイルを読み込んで解析する
         async function fetchAndParseCode() {
             console.log("Fetching and parsing code...");
-            const response = await fetch('https://github.com/Oshima-Shosen-Robotics-Research-Club/robocon2024-national/blob/stable/src/robot/main.cpp'); // C++ファイルの例
+            const response = await fetch('./robocon2024-national/src/robot/main.cpp'); // C++ファイルの例
             const code = await response.text();
             console.log("Code fetched:", code);
 
