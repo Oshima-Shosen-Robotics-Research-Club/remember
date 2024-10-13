@@ -27,8 +27,9 @@
             await TreeSitter.init();
             parser = new TreeSitter();
             const Lang = await TreeSitter.Language.load('https://unpkg.com/tree-sitter-wasms/out/tree-sitter-cpp.wasm');
+            console.log("Language loaded:", Lang);
             parser.setLanguage(Lang);
-            console.log("Parser initialized.");
+            console.log("Parser initialized:", parser);
         }
 
         // サブモジュール内のコードファイルを読み込んで解析する
@@ -41,6 +42,7 @@
             // Tree-sitterを使って解析する
             const tree = parser.parse(code);
             console.log("Code parsed:", tree);
+            console.log("Root node:", tree.rootNode); // 追加: ルートノードのログ出力
             return tree;
         }
 
@@ -51,6 +53,7 @@
 
             // 再帰的にノードを探索して変数宣言を探す
             function traverse(node) {
+                console.log("Traversing node:", node.type);
                 if (node.type === 'variable_declarator') {
                     const varType = node.parent.child(0).text;
                     const varName = node.child(0).text;
