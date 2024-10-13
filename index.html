@@ -66,7 +66,7 @@
                 }
             }
 
-            traverse(node.rootNode);
+            traverse(node);
             console.log("Variables extracted:", variables);
             return variables;
         }
@@ -114,7 +114,7 @@
             console.log("Displaying quiz...");
             await initializeParser();
             const tree = await fetchAndParseCode();
-            const variables = extractVariables(tree);
+            const variables = extractVariables(tree.rootNode);
             questions = variables.map(generateQuestion);
             console.log("Questions generated:", questions);
             showQuestion();
