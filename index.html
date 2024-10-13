@@ -54,7 +54,8 @@
             // 再帰的にノードを探索して変数宣言を探す
             function traverse(node) {
                 console.log("Traversing node:", node.type);
-                if (node.type === 'variable_declarator') {
+                if (node.type === 'declaration') {
+                    console.log("Variable declarator found:", node);
                     const varType = node.parent.child(0).text;
                     const varName = node.child(0).text;
                     const varValue = node.child(1) ? node.child(1).text : null;
