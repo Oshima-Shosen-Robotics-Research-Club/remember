@@ -91,9 +91,9 @@ class Quiz {
         }
 
         const question = `次の #define の意味を選んでください。`;
-        let correctOption = `${this.parseTextFromNode(node.child(1))} という値を、${this.parseTextFromNode(node.child(2))} という名前で扱えるようにする。`;
+        let correctOption = `${this.parseTextFromNode(node.child(2))} という値を、${this.parseTextFromNode(node.child(1))} という名前で扱えるようにする。`;
         let incorrectOptions = [];
-        incorrectOptions.push(`${this.parseTextFromNode(node.child(2))} という値を、${this.parseTextFromNode(node.child(1))} という名前で扱えるようにする。`);
+        incorrectOptions.push(`${this.parseTextFromNode(node.child(1))} という値を、${this.parseTextFromNode(node.child(2))} という名前で扱えるようにする。`);
         return this.createQuestion(node, question, correctOption, incorrectOptions);
     }
 
