@@ -49,7 +49,6 @@ class Quiz {
         return array;
     }
 
-
     createQuestion(node, question, correctOption, incorrectOptions) {
         const options = [correctOption, ...incorrectOptions];
         const shuffledOptions = this.shuffleArray(options);
