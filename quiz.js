@@ -49,16 +49,14 @@ class Quiz {
         return array;
     }
 
-    parseTextFromNode(node) {
-        const comments = node.children.filter(node => node.type === 'comment').map(node => node.text);
-        return node.text.replace(comments, '').replace(/>/g, '&gt;').replace(/</g, '&lt;');
-    }
 
     createQuestion(node, question, correctOption, incorrectOptions) {
         const options = [correctOption, ...incorrectOptions];
         const shuffledOptions = this.shuffleArray(options);
+        const comments = node.children.filter(node => node.type === 'comment').map(node => node.text);
+        const program = node.text.replace(comments, '').replace(/>/g, '&gt;').replace(/</g, '&lt;');
         return {
-            program: this.parseTextFromNode(node),
+            program: program,
             question: question,
             correctNum: shuffledOptions.indexOf(correctOption),
             options: shuffledOptions,
