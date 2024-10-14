@@ -145,8 +145,10 @@ class Quiz {
         const nodes = this.createNodeArray(tree.rootNode);
         const incQuestions = nodes.map(node => this.createIncQuestion(node)).filter(q => q !== null);
         const defQuestions = nodes.map(node => this.createDefQuestion(node)).filter(q => q !== null);
+        const declQuestions = nodes.map(node => this.createDeclQuestion(node)).filter(q => q !== null);
         this.questions.push(...incQuestions);
         this.questions.push(...defQuestions);
+        this.questions.push(...declQuestions);
         this.questions = this.shuffleArray(this.questions);
         document.getElementById('loading').style.display = 'none';
         this.showQuestion();
