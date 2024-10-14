@@ -4,25 +4,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>覚えろ</title>
+    <title>覚えて学ぶC++</title>
 </head>
 
 <body>
-    <h1>覚えて</h1>
+    <h1>覚えて学ぶC++</h1>
 
     <div id="loading" style="display:none;">ローディング中...</div>
     <div id="quiz-container">
         <!-- 生成されたクイズがここに表示されます -->
     </div>
+    <button id="check-button" style="display:none;">採点</button>
     <button id="next-button" style="display:none;">次へ</button>
+
+    <!-- URL選択セクション -->
+    <div id="code-selection">
+        <label for="code-url">コードを選んでください:</label>
+        <select id="code-url">
+            <option
+                value="https://raw.githubusercontent.com/Oshima-Shosen-Robotics-Research-Club/robocon2024-national/refs/heads/stable/src/controller/main.cpp">
+                robocon2024 - controller/main.cpp
+            </option>
+            <option
+                value="https://raw.githubusercontent.com/Oshima-Shosen-Robotics-Research-Club/robocon2024-national/refs/heads/stable/src/robot/main.cpp">
+                robocon2024 - robot/main.cpp
+            </option>
+            <option
+                value="https://raw.githubusercontent.com/Oshima-Shosen-Robotics-Research-Club/Tutorial/refs/heads/main/src/controller/main.cpp">
+                Tutorial - controller/main.cpp
+            </option>
+            <option
+                value="https://raw.githubusercontent.com/Oshima-Shosen-Robotics-Research-Club/Tutorial/refs/heads/main/src/robot/main.cpp">
+                Tutorial - robot/main.cpp
+            </option>
+        </select>
+        <button id="start-quiz-button">クイズを開始</button>
+    </div>
 
     <script src="https://unpkg.com/web-tree-sitter/tree-sitter.js"></script>
     <script type="module">
         let currentQuestionIndex = 0;
         let questions = [];
         let parser;
+        let score = 0;
 
-        // Tree-sitterの初期化
         async function initializeParser() {
             console.log("Initializing parser...");
             await TreeSitter.init();
@@ -33,48 +58,29 @@
             console.log("Parser initialized:", parser);
         }
 
-        // コードファイルを読み込んで解析する
-        async function fetchAndParseCode() {
-            console.log("Fetching and parsing code...");
-            const response = await fetch('https://raw.githubusercontent.com/Oshima-Shosen-Robotics-Research-Club/robocon2024-national/refs/heads/stable/src/robot/main.cpp');
+        async function fetchAndParseCode(url) {
+            console.log("Fetching and parsing code from:", url);
+            const response = await fetch(url);
             const code = await response.text();
             console.log("Code fetched:\n", code);
 
-            // Tree-sitterを使って解析する
             const tree = parser.parse(code);
             console.log("Code parsed:", tree);
             return tree;
         }
 
-        // 解析結果からC++の変数宣言を抽出する
-        function extractVariables(node) {
-            console.log("Extracting variables...");
-            const variables = [];
-
-            // 再帰的にノードを探索して変数宣言を探す
+        function createNodeArray(node) {
+            const nodeArray = [];
             function traverse(node, indent = 0) {
-                const indentStr = ' '.repeat(indent * 2);
-                console.log(`${indentStr}Type: ${node.type}, Text: ${node.text}`);
-
-                if (node.type === 'declaration') {
-                    console.log("Variable declarator found:", node);
-                    const varType = node.child(0).text;
-                    const varName = node.child(1).childCount > 0 ? node.child(1).child(0).text : node.child(1).text;
-                    const varValue = node.child(1).childCount > 2 ? node.child(1).child(2).text : null;
-                    variables.push({ type: varType, name: varName, value: varValue });
-                }
-
+                nodeArray.push(node);
                 for (let i = 0; i < node.childCount; i++) {
                     traverse(node.child(i), indent + 1);
                 }
             }
-
             traverse(node);
-            console.log("Variables extracted:", variables);
-            return variables;
+            return nodeArray;
         }
 
-        // 配列をランダムにシャッフルする関数
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -83,56 +89,102 @@
             return array;
         }
 
-        // 問題を生成する
-        function generateQuestion(variable) {
-            const correctOption = `${variable.type} 型の変数 ${variable.name} を宣言し、${variable.value} で初期化している。`;
-            const options = [
-                correctOption,
-                `${variable.name} 型の変数 ${variable.type} を宣言し、${variable.value} で初期化している。`,
-                `${variable.value} 型の変数 ${variable.name} を宣言し、${variable.type} で初期化している。`,
-                `${variable.value} 型の変数 ${variable.type} を宣言し、${variable.name} で初期化している。`
-            ];
-
-            // 選択肢をシャッフル
-            const shuffledOptions = shuffleArray(options);
-
-            return `<p>次の変数宣言 '${variable.name}' に関する文法的な問題を選択してください。</p><ul>${shuffledOptions.map((opt, index) => `<li>${String.fromCharCode(97 + index)}. ${opt}</li>`).join('')}</ul>`;
+        function parseTextFromNode(node) {
+            const comments = node.children.filter(node => node.type === 'comment').map(node => node.text);
+            return node.text.replace(comments, '').replace(/>/g, '&gt;').replace(/</g, '&lt;');
         }
 
-        // 現在の問題を表示する
+        function createIncQuestion(node) {
+            if (node.type !== 'preproc_include') {
+                return null;
+            }
+
+            const program = parseTextFromNode(node);
+            const question = `次の #include の "" や <> を見て、『どこからプログラムを取得しているか』を選んでください。<br>${program}`;
+            const correctNum = 0;
+
+            const options = [];
+            let correctOption = '';
+
+            if (node.child(1).type === 'system_lib_string') {
+                correctOption = '『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。';
+                options.push('『インクルードを行っているファイルが位置するフォルダから見て、プログラムを取得している。');
+            } else {
+                correctOption = '『インクルードを行っているファイルが位置するフォルダ』からプログラムを取得している。';
+                options.push('『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。');
+            }
+
+            options.push(correctOption);
+            shuffleArray(options);
+
+            return {
+                question: question,
+                correctNum: options.indexOf(correctOption),
+                options: options,
+            };
+        }
+
         function showQuestion() {
-            console.log("Showing question...");
             if (currentQuestionIndex < questions.length) {
                 const quizContainer = document.getElementById('quiz-container');
-                quizContainer.innerHTML = questions[currentQuestionIndex];
-                document.getElementById('next-button').style.display = 'block';
-            } else {
-                document.getElementById('quiz-container').innerHTML = '<p>全ての問題が終了しました。</p>';
+                quizContainer.innerHTML = '<h2>問題</h2>';
+                quizContainer.innerHTML += questions[currentQuestionIndex].question;
+                quizContainer.innerHTML += '<p>選択肢を選んでください。</p>';
+                quizContainer.innerHTML += questions[currentQuestionIndex].options.map((opt, index) => `<input type="radio" name="option" value="${index}">${opt}<br>`).join('');
                 document.getElementById('next-button').style.display = 'none';
+                document.getElementById('check-button').style.display = 'block';
+            } else {
+                document.getElementById('quiz-container').innerHTML = `<p>全ての問題が終了しました。あなたのスコアは ${score} / ${questions.length} です。</p>`;
+                document.getElementById('next-button').style.display = 'none';
+                document.getElementById('check-button').style.display = 'none';
             }
         }
 
-        // クイズをページに表示する
-        async function displayQuiz() {
-            console.log("Displaying quiz...");
+        async function displayQuiz(url) {
             document.getElementById('loading').style.display = 'block';
+            document.getElementById('code-selection').style.display = 'none'; // コード選択セクションを非表示にする
             await initializeParser();
-            const tree = await fetchAndParseCode();
-            const variables = extractVariables(tree.rootNode);
-            questions = variables.map(generateQuestion);
-            console.log("Questions generated:", questions);
+            const tree = await fetchAndParseCode(url);
+            const nodes = createNodeArray(tree.rootNode);
+            const incQuestions = nodes.map(createIncQuestion).filter(q => q !== null);
+            questions.push(...incQuestions);
             document.getElementById('loading').style.display = 'none';
             showQuestion();
         }
 
-        // 「次へ」ボタンのクリックイベント
+        document.getElementById('start-quiz-button').addEventListener('click', () => {
+            const selectedUrl = document.getElementById('code-url').value;
+            currentQuestionIndex = 0;
+            score = 0;
+            questions = [];
+            displayQuiz(selectedUrl);
+        });
+
         document.getElementById('next-button').addEventListener('click', () => {
             currentQuestionIndex++;
             showQuestion();
         });
 
-        // ページ読み込み時にクイズを表示
-        window.onload = displayQuiz;
+        document.getElementById('check-button').addEventListener('click', () => {
+            const selectedOption = document.querySelector('input[name="option"]:checked');
+            const resultMessage = document.createElement('p');
+            if (selectedOption) {
+                const selectedValue = parseInt(selectedOption.value, 10);
+                if (selectedValue === questions[currentQuestionIndex].correctNum) {
+                    score++;
+                    resultMessage.textContent = '正解です！';
+                } else {
+                    const correctAnswer = questions[currentQuestionIndex].options[questions[currentQuestionIndex].correctNum];
+                    resultMessage.textContent = `不正解です。正解は ${correctAnswer} です。`;
+                }
+            } else {
+                alert('選択肢を選んでください。');
+                return;
+            }
+            document.getElementById('quiz-container').appendChild(resultMessage);
+            document.getElementById('check-button').style.display = 'none';
+            document.getElementById('next-button').style.display = 'block';
+        });
     </script>
 </body>
 
