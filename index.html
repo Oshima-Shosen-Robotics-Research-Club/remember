@@ -125,6 +125,29 @@
             };
         }
 
+        function createDefQuestion(node) {
+            if (node.type !== 'preproc_def') {
+                return null;
+            }
+
+            const program = parseTextFromNode(node);
+            const question = `次の #define の意味を選んでください。<br>${program}`;
+            const correctNum = 0;
+
+            let options = [];
+            let correctOption = `${parseTextFromNode(node.child(1))} という値を、${parseTextFromNode(node.child(2))} という名前で扱えるようにする。`;
+            options.push(`${parseTextFromNode(node.child(2))} という値を、${parseTextFromNode(node.child(1))} という名前で扱えるようにする。`);
+
+            options.push(correctOption);
+            options = shuffleArray(options);
+
+            return {
+                question: question,
+                correctNum: options.indexOf(correctOption),
+                options: options,
+            };
+        }
+
         function showQuestion() {
             if (currentQuestionIndex < questions.length) {
                 const quizContainer = document.getElementById('quiz-container');
@@ -148,7 +171,9 @@
             const tree = await fetchAndParseCode(url);
             const nodes = createNodeArray(tree.rootNode);
             const incQuestions = nodes.map(createIncQuestion).filter(q => q !== null);
+            const defQuestions = nodes.map(createDefQuestion).filter(q => q !== null);
             questions.push(...incQuestions);
+            questions.push(...defQuestions);
             questions = shuffleArray(questions);
             document.getElementById('loading').style.display = 'none';
             showQuestion();
