@@ -72,6 +72,7 @@
         function createNodeArray(node) {
             const nodeArray = [];
             function traverse(node, indent = 0) {
+                console.log(' '.repeat(indent * 2), `type: ${node.type}, text: ${node.text}`);
                 nodeArray.push(node);
                 for (let i = 0; i < node.childCount; i++) {
                     traverse(node.child(i), indent + 1);
