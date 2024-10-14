@@ -70,16 +70,16 @@ class Quiz {
             return null;
         }
 
-        const question = `次の #include の "" や <> を見て、『どこからプログラムを取得しているか』を選んでください。`;
+        const question = `次の #include の "" や <> を見て、「どこからプログラムを取得しているか」を選んでください。`;
         let incorrectOptions = [];
         let correctOption = '';
 
         if (node.child(1).type === 'system_lib_string') {
-            correctOption = '『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。';
-            incorrectOptions.push('『インクルードを行っているファイルが位置するフォルダから見て、プログラムを取得している。');
+            correctOption = '「標準のライブラリがあるフォルダ」または「プロジェクト直下」からプログラムを取得している。';
+            incorrectOptions.push('「インクルードを行っているファイルが位置するフォルダから見て、プログラムを取得している。');
         } else {
-            correctOption = '『インクルードを行っているファイルが位置するフォルダ』からプログラムを取得している。';
-            incorrectOptions.push('『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。');
+            correctOption = '「インクルードを行っているファイルが位置するフォルダ」からプログラムを取得している。';
+            incorrectOptions.push('「標準のライブラリがあるフォルダ」または「プロジェクト直下」からプログラムを取得している。');
         }
 
         return this.createQuestion(node, question, correctOption, incorrectOptions);
@@ -176,7 +176,7 @@ class Quiz {
                     resultMessage.textContent = '正解です！';
                 } else {
                     const correctAnswer = this.questions[this.currentQuestionIndex].options[this.questions[this.currentQuestionIndex].correctNum];
-                    resultMessage.textContent = `不正解です。正解は ${correctAnswer} です。`;
+                    resultMessage.textContent = `不正解です。正解は『 ${correctAnswer} 』です。`;
                 }
             } else {
                 alert('選択肢を選んでください。');
