@@ -10,6 +10,7 @@
 <body>
     <h1>コード解析とクイズ生成</h1>
 
+    <div id="loading" style="display:none;">ローディング中...</div>
     <div id="quiz-container">
         <!-- 生成されたクイズがここに表示されます -->
     </div>
@@ -114,11 +115,13 @@
         // クイズをページに表示する
         async function displayQuiz() {
             console.log("Displaying quiz...");
+            document.getElementById('loading').style.display = 'block';
             await initializeParser();
             const tree = await fetchAndParseCode();
             const variables = extractVariables(tree.rootNode);
             questions = variables.map(generateQuestion);
             console.log("Questions generated:", questions);
+            document.getElementById('loading').style.display = 'none';
             showQuestion();
         }
 
