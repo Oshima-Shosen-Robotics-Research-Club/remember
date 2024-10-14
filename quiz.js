@@ -94,6 +94,28 @@ class Quiz {
         return this.createQuestion(node, question, correctOption, incorrectOptions);
     }
 
+    createDeclQuestion(node) {
+        if (node.type !== 'declaration') {
+            return null;
+        }
+
+        const question = `次の変数宣言の意味を選んでください。`;
+        let correctOption;
+        let incorrectOptions = [];
+        if (node.child(0).type === 'type_identifier') {
+            correctOption = `${this.parseTextFromNode(node.child(0))} 型の変数 ${this.parseTextFromNode(node.child(1))} を宣言している。`;
+            incorrectOptions.push(`${this.parseTextFromNode(node.child(1))} 型の変数 ${this.parseTextFromNode(node.child(0))} を宣言している。`);
+        } else if (node.child(0).type === 'init_declarator') {
+            correctOption = `${this.parseTextFromNode(node.child(0))} 型の配列 ${this.parseTextFromNode(node.child(1).child(0).child(0))} を宣言している。`;
+            incorrectOptions.push(`${this.parseTextFromNode(node.child(1).child(0).child(0))} 型の配列 ${this.parseTextFromNode(node.child(0))} を宣言している。`);
+        }
+        else {
+            correctOption = '問題の自動生成に対応していないプログラムです。';
+            incorrectOptions.push('問題の自動生成に対応していないプログラムです。');
+        }
+        return this.createQuestion(node, question, correctOption, incorrectOptions);
+    }
+
     showQuestion() {
         if (this.currentQuestionIndex < this.questions.length) {
             const quizContainer = document.getElementById('quiz-container');
