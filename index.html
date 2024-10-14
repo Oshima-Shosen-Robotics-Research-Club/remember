@@ -103,7 +103,7 @@
             const question = `次の #include の "" や <> を見て、『どこからプログラムを取得しているか』を選んでください。<br>${program}`;
             const correctNum = 0;
 
-            const options = [];
+            let options = [];
             let correctOption = '';
 
             if (node.child(1).type === 'system_lib_string') {
@@ -115,7 +115,7 @@
             }
 
             options.push(correctOption);
-            shuffleArray(options);
+            options = shuffleArray(options);
 
             return {
                 question: question,
@@ -148,6 +148,7 @@
             const nodes = createNodeArray(tree.rootNode);
             const incQuestions = nodes.map(createIncQuestion).filter(q => q !== null);
             questions.push(...incQuestions);
+            questions = shuffleArray(questions);
             document.getElementById('loading').style.display = 'none';
             showQuestion();
         }
