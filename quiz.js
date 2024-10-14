@@ -54,33 +54,36 @@ class Quiz {
         return node.text.replace(comments, '').replace(/>/g, '&gt;').replace(/</g, '&lt;');
     }
 
+    createQuestion(node, question, correctOption, incorrectOptions) {
+        const options = [correctOption, ...incorrectOptions];
+        const shuffledOptions = this.shuffleArray(options);
+        return {
+            program: this.parseTextFromNode(node),
+            question: question,
+            correctNum: shuffledOptions.indexOf(correctOption),
+            options: shuffledOptions,
+        };
+    }
+
     createIncQuestion(node) {
         if (node.type !== 'preproc_include') {
             return null;
         }
 
-        const program = this.parseTextFromNode(node);
-        const question = `次の #include の "" や <> を見て、『どこからプログラムを取得しているか』を選んでください。<br>${program}`;
-
-        let options = [];
+        const question = `次の #include の "" や <> を見て、『どこからプログラムを取得しているか』を選んでください。`;
+        let incorrectOptions = [];
         let correctOption = '';
 
         if (node.child(1).type === 'system_lib_string') {
             correctOption = '『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。';
-            options.push('『インクルードを行っているファイルが位置するフォルダから見て、プログラムを取得している。');
+            incorrectOptions.push('『インクルードを行っているファイルが位置するフォルダから見て、プログラムを取得している。');
         } else {
             correctOption = '『インクルードを行っているファイルが位置するフォルダ』からプログラムを取得している。';
-            options.push('『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。');
+            incorrectOptions.push('『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。');
         }
 
-        options.push(correctOption);
-        options = this.shuffleArray(options);
-
-        return {
-            question: question,
-            correctNum: options.indexOf(correctOption),
-            options: options,
-        };
+        incorrectOptions.push(correctOption);
+        return this.createQuestion(node, question, correctOption, incorrectOptions);
     }
 
     createDefQuestion(node) {
@@ -88,27 +91,19 @@ class Quiz {
             return null;
         }
 
-        const program = this.parseTextFromNode(node);
-        const question = `次の #define の意味を選んでください。<br>${program}`;
-
-        let options = [];
+        const question = `次の #define の意味を選んでください。`;
+        let incorrectOptions = [];
         let correctOption = `${this.parseTextFromNode(node.child(1))} という値を、${this.parseTextFromNode(node.child(2))} という名前で扱えるようにする。`;
-        options.push(`${this.parseTextFromNode(node.child(2))} という値を、${this.parseTextFromNode(node.child(1))} という名前で扱えるようにする。`);
-
-        options.push(correctOption);
-        options = this.shuffleArray(options);
-
-        return {
-            question: question,
-            correctNum: options.indexOf(correctOption),
-            options: options,
-        };
+        incorrectOptions.push(`${this.parseTextFromNode(node.child(2))} という値を、${this.parseTextFromNode(node.child(1))} という名前で扱えるようにする。`);
+        return this.createQuestion(node, question, correctOption, incorrectOptions);
     }
 
     showQuestion() {
         if (this.currentQuestionIndex < this.questions.length) {
             const quizContainer = document.getElementById('quiz-container');
             quizContainer.innerHTML = '<h2>問題</h2>';
+            quizContainer.innerHTML += `<p>問題 ${this.currentQuestionIndex + 1} / ${this.questions.length}</p>`;
+            quizContainer.innerHTML += `<p>プログラム</p><pre>${this.questions[this.currentQuestionIndex].program}</pre>`;
             quizContainer.innerHTML += this.questions[this.currentQuestionIndex].question;
             quizContainer.innerHTML += '<p>選択肢を選んでください。</p>';
             quizContainer.innerHTML += this.questions[this.currentQuestionIndex].options.map((opt, index) => `<input type="radio" name="option" value="${index}">${opt}<br>`).join('');
