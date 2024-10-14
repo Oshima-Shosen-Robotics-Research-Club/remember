@@ -79,7 +79,6 @@ class Quiz {
             incorrectOptions.push('『標準のライブラリがあるフォルダ』または『プロジェクト直下』からプログラムを取得している。');
         }
 
-        incorrectOptions.push(correctOption);
         return this.createQuestion(node, question, correctOption, incorrectOptions);
     }
 
@@ -89,8 +88,8 @@ class Quiz {
         }
 
         const question = `次の #define の意味を選んでください。`;
-        let incorrectOptions = [];
         let correctOption = `${this.parseTextFromNode(node.child(1))} という値を、${this.parseTextFromNode(node.child(2))} という名前で扱えるようにする。`;
+        let incorrectOptions = [];
         incorrectOptions.push(`${this.parseTextFromNode(node.child(2))} という値を、${this.parseTextFromNode(node.child(1))} という名前で扱えるようにする。`);
         return this.createQuestion(node, question, correctOption, incorrectOptions);
     }
