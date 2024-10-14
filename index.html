@@ -37,12 +37,11 @@
             console.log("Fetching and parsing code...");
             const response = await fetch('https://raw.githubusercontent.com/Oshima-Shosen-Robotics-Research-Club/robocon2024-national/refs/heads/stable/src/robot/main.cpp'); // C++ファイルの例
             const code = await response.text();
-            console.log("Code fetched:", code);
+            console.log("Code fetched:\n", code);
 
             // Tree-sitterを使って解析する
             const tree = parser.parse(code);
             console.log("Code parsed:", tree);
-            console.log("Root node:", tree.rootNode); // 追加: ルートノードのログ出力
             return tree;
         }
 
@@ -52,18 +51,20 @@
             const variables = [];
 
             // 再帰的にノードを探索して変数宣言を探す
-            function traverse(node) {
-                console.log("Traversing node:", node.type);
+            function traverse(node, indent = 0) {
+                const indentStr = ' '.repeat(indent * 2);
+                console.log(`${indentStr}Type: ${node.type}, Text: ${node.text}`);
+
                 if (node.type === 'declaration') {
                     console.log("Variable declarator found:", node);
-                    const varType = node.parent.child(0).text;
-                    const varName = node.child(0).text;
-                    const varValue = node.child(1) ? node.child(1).text : null;
+                    const varType = node.child(0).text;
+                    const varName = node.child(1).childCount > 0 ? node.child(1).child(0).text : node.child(1).text;
+                    const varValue = node.child(1).childCount > 2 ? node.child(1).child(2).text : null;
                     variables.push({ type: varType, name: varName, value: varValue });
                 }
 
                 for (let i = 0; i < node.childCount; i++) {
-                    traverse(node.child(i));
+                    traverse(node.child(i), indent + 1);
                 }
             }
 
