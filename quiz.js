@@ -50,6 +50,9 @@ class Quiz {
     }
 
     parseTextFromNode(node) {
+        if (node.childCount === 0) {
+            return node.text;
+        }
         const comments = node.children.filter(node => node.type === 'comment').map(node => node.text);
         return node.text.replace(comments, '').replace(/>/g, '&gt;').replace(/</g, '&lt;');
     }
