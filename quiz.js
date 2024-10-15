@@ -109,8 +109,14 @@ class Quiz {
         let correctOption;
         let incorrectOptions = [];
         if (node.child(0).type === 'type_identifier') {
-            correctOption = `${this.parseTextFromNode(node.child(0))} 型の変数 ${this.parseTextFromNode(node.child(1).child(0))} を宣言し、初期値を ${this.parseTextFromNode(node.child(1).child(1))} に設定している。`;
-            incorrectOptions.push(`${this.parseTextFromNode(node.child(1).child(0))} 型の変数 ${this.parseTextFromNode(node.child(0))} を宣言し、初期値を ${this.parseTextFromNode(node.child(1).child(1))} に設定している。`);
+            if (node.child(1).childCount === 1) {
+                correctOption = `${this.parseTextFromNode(node.child(0))} 型の変数 ${this.parseTextFromNode(node.child(1))} を宣言している。`;
+                incorrectOptions.push(`${this.parseTextFromNode(node.child(1))} 型の変数 ${this.parseTextFromNode(node.child(0))} を宣言している。`);
+            }
+            else {
+                correctOption = `${this.parseTextFromNode(node.child(0))} 型の変数 ${this.parseTextFromNode(node.child(1).child(0))} を宣言し、初期値を ${this.parseTextFromNode(node.child(1).child(1))} に設定している。`;
+                incorrectOptions.push(`${this.parseTextFromNode(node.child(1).child(0))} 型の変数 ${this.parseTextFromNode(node.child(0))} を宣言し、初期値を ${this.parseTextFromNode(node.child(1).child(1))} に設定している。`);
+            }
         } else if (node.child(0).type === 'init_declarator') {
             correctOption = `${this.parseTextFromNode(node.child(0))} 型の配列 ${this.parseTextFromNode(node.child(1).child(0).child(0))} を宣言している。`;
             incorrectOptions.push(`${this.parseTextFromNode(node.child(1).child(0).child(0))} 型の配列 ${this.parseTextFromNode(node.child(0))} を宣言している。`);
